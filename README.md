@@ -1,21 +1,57 @@
 # FNOL Document Extraction and Claim Routing System
 
-This project is an AI-powered insurance workflow automation system that processes **FNOL (First Notice of Loss)** documents and recommends the appropriate claim routing path.
-
-The system supports **PDF and TXT files**, extracts claim-related information using **Google Gemini**, validates mandatory fields, and routes the claim using predefined business logic.
+An AI-powered insurance workflow automation project that processes **FNOL (First Notice of Loss)** documents, extracts structured claim information using **Google Gemini**, validates mandatory fields, and recommends a routing path using rule-based logic.
 
 ---
 
 ## Project Overview
 
-In insurance claim processing, FNOL documents often contain important details such as policy number, date of incident, location, claim type, estimated damage, and more.
+This project is designed to simulate an insurance claim intake workflow.
 
-This project automates that workflow in four main steps:
+It accepts an FNOL document in **PDF** or **TXT** format, extracts the text content, sends it to a Gemini-powered extraction agent, validates the returned fields, and then routes the claim to the appropriate queue based on predefined business rules.
 
-1. Extract text from PDF or TXT files
-2. Use an LLM to convert unstructured text into structured JSON
-3. Validate required fields
-4. Route the claim to the correct review path
+This project demonstrates the practical use of:
+
+- **Document extraction**
+- **LLM-based JSON field extraction**
+- **Validation of critical business fields**
+- **Rule-based claim routing**
+
+---
+
+## Approach
+
+The system follows a simple 4-step pipeline:
+
+### 1. Document Extraction
+- If the input file is a `.txt` file, the system reads it directly.
+- If the input file is a `.pdf` file, the system uses `pdfplumber` to extract text page by page.
+- If the format is unsupported, the system raises an error.
+
+### 2. AI-Based Field Extraction
+- The extracted FNOL text is passed to **Google Gemini 2.5 Flash** through LangChain.
+- The model is instructed to return only valid JSON.
+- The expected fields include policy number, date, location, claim type, estimated damage, and more.
+
+### 3. Validation
+The system checks whether these mandatory fields are present:
+
+- `policy_number`
+- `claim_type`
+- `estimated_damage`
+- `date`
+- `location`
+
+If any of these are missing, the claim is marked for **Manual Review**.
+
+### 4. Claim Routing
+The system recommends a route based on business rules:
+
+- **Manual Review** → if mandatory fields are missing
+- **Investigation Flag** → if suspicious keywords like `fraud`, `inconsistent`, or `staged` appear
+- **Specialist Queue** → if the claim type is `injury`
+- **Fast-track** → if estimated damage is below 25,000
+- **Standard Review** → if no special condition applies
 
 ---
 
@@ -23,51 +59,19 @@ This project automates that workflow in four main steps:
 
 - Supports **PDF** and **TXT** input files
 - Extracts text using `pdfplumber`
-- Uses **Gemini 2.5 Flash** for structured data extraction
-- Returns claim data in valid **JSON format**
+- Uses **Gemini 2.5 Flash** for structured JSON extraction
+- Cleans model output before parsing JSON
 - Validates mandatory claim fields
-- Applies **rule-based routing logic**
-- Handles missing data and suspicious claim descriptions
-- Combines **GenAI + business rules** in one workflow
-
----
-
-## Workflow
-
-### 1. Document Extraction
-The system reads the FNOL file and extracts text.
-
-Supported formats:
-- `.pdf`
-- `.txt`
-
-### 2. Reader Agent
-A Gemini-powered agent reads the extracted FNOL content and returns structured claim data in JSON format.
-
-### 3. Validation
-The extracted data is checked for mandatory fields such as:
-- `policy_number`
-- `claim_type`
-- `estimated_damage`
-- `date`
-- `location`
-
-### 4. Claim Routing
-The system recommends one of the following routes:
-
-- **Manual Review** → if required fields are missing
-- **Investigation Flag** → if suspicious keywords are found
-- **Specialist Queue** → if claim type is injury
-- **Fast-track** → if estimated damage is below 25,000
-- **Standard Review** → default path
+- Routes claims using predefined business logic
+- Handles extraction and input errors
 
 ---
 
 ## Tech Stack
 
 - Python
-- Google Gemini 2.5 Flash
 - LangChain
+- Google Gemini 2.5 Flash
 - pdfplumber
 - python-dotenv
 - JSON
@@ -75,15 +79,31 @@ The system recommends one of the following routes:
 
 ---
 
-## Project Structure
+## Repository Structure
 
 ```bash
-project-folder/
+Fnol-document-extraction-and-routing/
 │
-├── app.py
-├── .env
-├── requirements.txt
-├── sample_data/
-│   ├── fnol_sample.txt
-│   └── fnol_sample.pdf
+├── FNOL_extraction_project.py
+├── Requirement.txt
 └── README.md
+
+▶️ Steps to Run (Windows)
+
+git clone https://github.com/HARIHARANG7225/Fnol-document-extraction-and-routing.git
+cd Fnol-document-extraction-and-routing
+python -m venv venv
+venv\Scripts\activate
+pip install -r Requirement.txt
+
+Create a .env file in the project root and add:
+
+GOOGLE_API_KEY=your_google_api_key_here
+
+Make sure your input file is ready (example: sample.txt or sample.pdf)
+
+python FNOL_extraction_project.py
+
+When prompted, enter:
+
+Enter the FNOL file path (.pdf or .txt): sample.txt
